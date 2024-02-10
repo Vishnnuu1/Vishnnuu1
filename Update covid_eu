@@ -1,0 +1,94 @@
+
+/*
+Covid 19 Data Exploration
+
+Skills used:  Data Exploration, CTE's, Temp Tables, Windows Functions, Aggregate Functions
+
+*/
+
+--Creating a new table with data inclusive for Europe
+
+
+CREATE TABLE covid_eu.europe AS
+SELECT *
+FROM 
+  `covid-eu.covid_eu.world`
+WHERE continent = "Europe"
+
+--Previewing our desired table
+
+
+SELECT * 
+FROM `covid-eu.covid_eu.europe` 
+ORDER BY 3,4
+
+-- Exploring the probability of death when infected
+
+
+SELECT
+  Location,date,total_cases,total_deaths,(total_deaths/total_cases)*100 AS death_percent
+FROM 
+  `covid-eu.covid_eu.europe`
+ORDER BY 1,2
+
+
+--Exploring the percentile of countries population infected in Europe
+
+
+SELECT
+  Location, population, MAX(total_cases) AS overall_infected, (MAX(total_cases/population)*100) AS infected_percentage
+FROM
+  `covid-eu.covid_eu.europe`
+GROUP BY Location, population 
+ORDER BY 4 DESC
+
+
+--We can see that Cyprus is the highly affected country in Europe in comparison with Population
+
+
+--To visualize total cases around dates
+
+
+SELECT
+  Location, date,population, total_cases, total_cases/population AS percentage_cases
+FROM
+  `covid-eu.covid_eu.europe`
+ORDER BY 1,2
+
+
+--Now lets find out the total cases and Deaths across all of the Europe
+
+
+WITH z
+AS
+(
+SELECT location, max(total_cases) AS a ,MAX(total_deaths) AS b
+FROM `covid-eu.covid_eu.europe`
+GROUP BY location
+)
+SELECT 
+  SUM(a) AS europe_cases, SUM(b) AS europe_deaths, SUM(b)/SUM(a)*100 AS death_percent
+FROM z
+
+
+--pov: I just now found Russia is half European - Still in shock!
+
+
+--Lets find the percentage of people vaccinated in Europe
+
+
+WITH x
+AS
+(
+SELECT 
+  location, date, new_vaccinations, SUM(new_vaccinations) OVER (PARTITION BY location ORDER BY location,date) AS inc_vaccinations, population
+FROM
+    `covid-eu.covid_eu.europe`
+)
+SELECT
+  SUM(DISTINCT population) AS overall_population, MAX (inc_vaccinations) AS overall_vaccinations, (MAX (inc_vaccinations))/SUM(DISTINCT population)*100 AS vaccination_percentage
+  FROM x
+
+
+--The visualization for the project is available in my website
+
